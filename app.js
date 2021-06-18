@@ -10,7 +10,8 @@ const fs = require('fs');
 const readline = require('readline');
 const { google } = require('googleapis');
 var MailParser = require("mailparser").MailParser;
-const cheerio = require('cheerio')
+const cheerio = require('cheerio');
+const { query } = require("express");
 
 app.set("view engine", "ejs")
 // If modifying these scopes, delete token.json.
@@ -133,55 +134,57 @@ function listMessages(auth, query) {
     })
 }
 
-module.exports = function getMail(msgId, auth) {
 
-    console.log(msgId)
-    const gmail = google.gmail({ version: 'v1', auth });
-    //This api call will fetch the mailbody.
+function getMail(msgId, auth) {
+        console.log(msgId)
+        const gmail = google.gmail({ version: 'v1', auth });
+        //This api call will fetch the mailbody.
 
 
-    gmail.users.messages.get({
-        userId: 'me',
-        id: msgId,
-    }, (err, res) => {
-        // console.log(res.data.labelIds.INBOX)
-        if (!err) {
-            console.log("no error")
-            var body = res.data.payload.parts[0].body.data;
-            // global.Base64 = {
-            //     encode: function (str) {
-            //         return Buffer.from(str).toString('base64');
-            //     },
-            // };
-            const buff = Buffer.from(body, "base64");
+        gmail.users.messages.get({
+            userId: 'me',
+            id: msgId,
+        }, (err, res) => {
+            // console.log(res.data.labelIds.INBOX)
+            if (!err) {
 
-            var stri = buff.toString("utf8");
+                console.log("no error")
+                var body = res.data.payload.parts[0].body.data;
+                // global.Base64 = {
+                //     encode: function (str) {
+                //         return Buffer.from(str).toString('base64');
+                //     },
+                // };
+                const buff = Buffer.from(body, "base64");
 
-            // console.log(stri);
-            // return stri;
-            // global.gzip = {
-            //     zip: function (str) {
-            //         return zlib.gzipSync(Buffer.from(str));
-            //     },
-            // }
-        } else {
-            console.log("SOME ERROR OCCURRED" + err)
-        }
+                var stri = buff.toString("utf8");
+                // console.log(stri);
+                // return stri;
+                // global.gzip = {
+                //     zip: function (str) {
+                //         return zlib.gzipSync(Buffer.from(str));
+                //     },
+                // }
+                console.log(stri)
+            } else {
+                console.log("SOME ERROR OCCURRED" + err)
+            }
 
-    });
+        });
 }
 
 
 
-app.get("/", (req,res) => {
+
+app.get("/", (req, res) => {
     fs.readFile('credentials.json', (err, content) => {
         if (err) return console.log('Error loading client secret file:', err);
         // Authorize a client with credentials, then call the Gmail API.
         authorize(JSON.parse(content), listMessages);
-    });  
-    console.log(stri);
+
+    });
     res.render("index", {
-        str: "this.stri"
+        str : getMail.stri
     })
 })
 
