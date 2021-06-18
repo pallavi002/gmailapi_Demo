@@ -1,11 +1,5 @@
 const express = require("express");
 const app = express();
-
-
-
-
-
-
 const fs = require('fs');
 const readline = require('readline');
 const { google } = require('googleapis');
@@ -14,17 +8,11 @@ const cheerio = require('cheerio');
 const { query } = require("express");
 
 app.set("view engine", "ejs")
-// If modifying these scopes, delete token.json.
 const SCOPES = ['https://www.googleapis.com/auth/gmail.readonly'];
-// The file token.json stores the user's access and refresh tokens, and is
-// created automatically when the authorization flow completes for the first
-// time.
 const TOKEN_PATH = 'token.json';
 
-// Load client secrets from a local file.
 fs.readFile('credentials.json', (err, content) => {
     if (err) return console.log('Error loading client secret file:', err);
-    // Authorize a client with credentials, then call the Gmail API.
     authorize(JSON.parse(content), listLabels);
 });
 
@@ -68,7 +56,6 @@ function getNewToken(oAuth2Client, callback) {
         oAuth2Client.getToken(code, (err, token) => {
             if (err) return console.error('Error retrieving access token', err);
             oAuth2Client.setCredentials(token);
-            // Store the token to disk for later program executions
             fs.writeFile(TOKEN_PATH, JSON.stringify(token), (err) => {
                 if (err) return console.error(err);
                 console.log('Token stored to', TOKEN_PATH);
@@ -101,14 +88,7 @@ function listLabels(auth) {
     });
 }
 
-
-
-
-
-
-
-
-function listMessages(auth, query) {
+function listMessages(auth, query, stri) {
     query = 'pallavi2808lodhi@gmail.com';
     return new Promise((resolve, reject) => {
         const gmail = google.gmail({ version: 'v1', auth });
@@ -128,26 +108,24 @@ function listMessages(auth, query) {
                     return;
                 } resolve(res.data);
 
-                getMail(res.data.messages[0].id, auth);
+                getMail(res.data.messages[0].id, auth, stri);
+                console.log(stri)
             }
         );
     })
 }
 
 
-function getMail(msgId, auth) {
+function getMail(msgId, auth, stri) {
         console.log(msgId)
         const gmail = google.gmail({ version: 'v1', auth });
-        //This api call will fetch the mailbody.
-
-
         gmail.users.messages.get({
             userId: 'me',
             id: msgId,
         }, (err, res) => {
             // console.log(res.data.labelIds.INBOX)
             if (!err) {
-
+                // var stri;
                 console.log("no error")
                 var body = res.data.payload.parts[0].body.data;
                 // global.Base64 = {
@@ -157,15 +135,14 @@ function getMail(msgId, auth) {
                 // };
                 const buff = Buffer.from(body, "base64");
 
-                var stri = buff.toString("utf8");
-                // console.log(stri);
-                // return stri;
+                stri = buff.toString("utf8");
+                console.log(stri);
+                return stri;
                 // global.gzip = {
                 //     zip: function (str) {
                 //         return zlib.gzipSync(Buffer.from(str));
                 //     },
                 // }
-                console.log(stri)
             } else {
                 console.log("SOME ERROR OCCURRED" + err)
             }
@@ -173,19 +150,13 @@ function getMail(msgId, auth) {
         });
 }
 
-
-
-
 app.get("/", (req, res) => {
     fs.readFile('credentials.json', (err, content) => {
         if (err) return console.log('Error loading client secret file:', err);
         // Authorize a client with credentials, then call the Gmail API.
         authorize(JSON.parse(content), listMessages);
-
     });
-    res.render("index", {
-        str : getMail.stri
-    })
+    res.render("index")
 })
 
 app.listen("5000", () => { console.log("app running on port 5000") })
